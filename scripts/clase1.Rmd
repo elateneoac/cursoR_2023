@@ -1,7 +1,7 @@
 ---
 title: "Introducción al análisis de datos con R: Clase 1"
 author: "Laboratorio de Datos - El Ateneo"
-date: "24/09/2022"
+date: "18/05/2023"
 output: 
   rmdformats::robobook:
     self_contained: true
