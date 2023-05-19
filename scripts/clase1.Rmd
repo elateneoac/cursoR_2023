@@ -19,24 +19,49 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Habiendo instalado R  y Rstudio, veremos de qué se trata el entorno y daremos los primeros pasos en **R**. 
 
+# Proyectos
+
+Trabajar con proyectos es considerado una buena práctica. Los proyectos crean una carpeta en nuestra PC en donde se almacenarán los archivos, tablas, scripts que utilicemos. Esto permite que nuestro trabajo sea todo más organizado
+
+Para crear un proyecto tenés podés entrar en:  File > New project  
+
+Y luego escribir/seleccionar el nombre de la carpeta donde se va a alojar nuestro trabajo.
+
+
 
 # Objetos
 
-En R todo es un objeto.
+  R es un lenguaje orientado a objetos. En R todo es un objeto.  Esto significa que a una tabla, un valor, una variable, etc. le voy a poner un nombre que va a pasar a llamarse "objeto"
 
 Antes de avanzar, tengamos en cuenta que cuando R se ejecuta nos devuelve un valor, esta salida podemos chequearla en la consola. 
 
 Por ejemplo, si lo usamos cual calculadora:
 
 ```{r}
-
+# Esto es un comentario
 10 + 1
+
+# Para ver el resultado del objeto uso las teclas Ctrl + Enter
+# También puedo usar el ícono  "Run"
 
 ```
 
 También, podemos generar un chunk de código con `ctrl + alt + i`.
 
 Practiquemos crear uno: 
+
+
+
+## Vectores
+
+Los **vectores** son uno de los objetos más utilizados. Se trata de conjuntos de valores, numéricos, de texto, o combinados de una única dimensión. Para crear un vector necesitamos usar la función `c()` que significa combine y asignarsela a un objeto.
+
+Los vectores pueden tener texto o número.
+
+```{r}
+curso <- c("Curso","Ateneo")
+curso
+```
 
 
 
