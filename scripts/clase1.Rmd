@@ -23,15 +23,23 @@ Habiendo instalado R  y Rstudio, veremos de qué se trata el entorno y daremos l
 
 Trabajar con proyectos es considerado una buena práctica. Los proyectos crean una carpeta en nuestra PC en donde se almacenarán los archivos, tablas, scripts que utilicemos. Esto permite que nuestro trabajo sea todo más organizado
 
-Para crear un proyecto tenés podés entrar en:  File > New project  
+Para crear un proyecto tenés podés entrar en: File \> New project
 
 Y luego escribir/seleccionar el nombre de la carpeta donde se va a alojar nuestro trabajo.
+
+En este curso trabajaremos a lo largo de las clases con un [**repositorio de Github**](#0)**.**
+
+Para ello deberás entrar en:
+
+File \> New project \> version control
+
+En la carpeta **pdf** encontrarás un **instructivo** de cómo descargar y actualizarlo en R
 
 
 
 # Objetos
 
-  R es un lenguaje orientado a objetos. En R todo es un objeto.  Esto significa que a una tabla, un valor, una variable, etc. le voy a poner un nombre que va a pasar a llamarse "objeto"
+R es un lenguaje orientado a objetos. En R todo es un objeto.  Esto significa que a una tabla, un valor, una variable, etc. le voy a poner un nombre que va a pasar a llamarse "objeto"
 
 Antes de avanzar, tengamos en cuenta que cuando R se ejecuta nos devuelve un valor, esta salida podemos chequearla en la consola. 
 
