@@ -29,13 +29,15 @@ pais <- "Peru"
 #Varios elementos
 paises <- c("Argentina", "Brasil", "Uruguay")
 
+numeros <- c(1,2,3)
+class(numeros)
 class(paises)
 
 #puedo chequear si se trata de un vector
 is.vector(paises)
 
 #podemos incluir un vector, dentro de otro vector
-paises <- c(paises, pais)
+paises <- c(paises, pais,numeros)
 paises
 
 ```
@@ -65,7 +67,7 @@ segundo_cuatrimestre <- 5:8
 encuestas <- cbind(primer_cuatrimestre, segundo_cuatrimestre)
 encuestas
 
-#Cada vector es una fila
+#Cada vector es una fila # r de row 
 meses <- rbind(primer_cuatrimestre, segundo_cuatrimestre)
 meses
 
@@ -81,8 +83,10 @@ listado <- list(1:10,"Lunes", pi, list(c(-1, -2)))
 listado
 
 #Cada elemento de la lista puede ser nombrado
-names(listado) <- c("numeros", "vector", "función", "lista")
+names(listado) <- c("fideos", "vector", "funcion", "lista")
 listado
+
+#print(paste(listado,"hola hola",meses))
 
 ```
 
@@ -152,20 +156,22 @@ Obtener un resumen con `summary()`:
 
 ```{r}
 summary(registro)
-
 ```
 
 Y acceder a los valores únicos o distintos con `unique()`:
 
 ```{r}
 unique(registro$Nombres)
+
+
+duplicated(registro$Nombres)
 ```
 
 El `$` permite acceder a un subconjunto o elemento de un df o de una lista. También se pueden acceder a través de `[[]]`.
 
 ```{r}
 
-unique(registro[["Nombres"]])
+unique(registro[["Apellidos"]])
 
 ```
 
@@ -175,7 +181,7 @@ Por último, se pueden ver la cantidad de categorías de una variable con `lengh
 
 library(dplyr)
 
-length(unique(registro$Nombres))
+length(unique(registro$Nombres)) 
 distinct(registro, Nombres)
 
 
@@ -191,7 +197,7 @@ Desde una **url**:
 
 ```{r}
 #Librería readr para importar archivos: 
-#install.packages("readr)
+#install.packages("readr")
 library(readr)
 
 #Defino url
@@ -216,10 +222,12 @@ Desde archivo **csv**:
 #Chequeo mi ruta
 getwd()
 
+#choose.files()
 #Importo
 clase <- "clase2"
 barrios_populares<-read_csv(paste0("../data/", clase, "/datosbp.csv"))
 
+#barrios_populares <- read_csv("data/clase2/datosbp.csv")
 
 ```
 
@@ -259,17 +267,16 @@ write.csv(registro, paste0("../data/", clase, "/registro.csv"), row.names = F, f
 A un archivo **.xlsx**:
 
 ```{r}
-# install.packages("xlsx")
-library(xlsx)
+#install.packages(openxlsx)
+library(openxlsx)
 
-write.xlsx(registro, paste0("../data/", clase, "/registro.xlsx"), row.names = F)
+write.xlsx(registro, paste0("../data/", clase, "/registro.xlsx"), rowNames = F)
 ```
 
 A un archivo **.sav**:
 
 ```{r}
 #library(haven)
-
 write_sav(registro, paste0("../data/", clase, "/registro.sav"))
 
 ```
@@ -293,9 +300,13 @@ library(tidyverse)
 Vamos a seguir trabajando con el dataframe de barrios populares (2021):
 
 ```{r}
+#install.package("janitor")
+library(janitor) #Janitor nos permite limpiar los nombres de las variables
+
 #Importo
 clase <- "clase2"
-barrios_populares <-read_csv(paste0("../data/", clase, "/datosbp.csv"))
+barrios_populares <-read_csv(paste0("../data/", clase, "/datosbp.csv")) %>% 
+  clean_names() #limpiamos los nombres para no tener errores por los caracteres
 
 ```
 
@@ -303,6 +314,7 @@ Podemos ver las columnas como aprendimos:
 
 ```{r}
 colnames(barrios_populares)
+#names(barrios_populares)
 
 ```
 
@@ -311,7 +323,8 @@ colnames(barrios_populares)
 Si quisieramos trabajar sólo con cantidades de personas y familias encuestadas, podríamos quedarnos con esas **columnas** usando `select()`:
 
 ```{r}
-cantidades <- barrios_populares %>% select("familias_encuestadas", "personas_encuestadas")
+cantidades <- barrios_populares %>% 
+  select("familias_encuestadas", "personas_encuestadas")
 
 #también podríamos acceder mediante el índice, el orden de esas columnas: 
 
@@ -331,7 +344,7 @@ Por otro lado, el `rm()` permite suprimir objetos del enviroment. Con `rm(list =
 Además, podríamos querer trabajar sólo con datos correspondientes a La Pampa. En ese caso, para seleccionar **filas**, usaríamos `filter()`:
 
 ```{r}
-la_pampa <- barrios_populares %>% filter(Provincia == "La Pampa")
+la_pampa <- barrios_populares %>% filter(provincia == "La Pampa")
 ```
 
 O también con datos de una región que incluya varias provincias:
@@ -340,8 +353,8 @@ O también con datos de una región que incluya varias provincias:
 
 provincias_noa<-c("Jujuy", "Salta", "Tucumán", "Catamarca", "La Rioja", "Santiago del Estero")
 
-noa <- barrios_populares %>% filter(Provincia%in%provincias_noa)
-
+noa <- barrios_populares %>% filter(provincia%in%provincias_noa)
+head(noa)
 ```
 
 ## Arrange()
@@ -350,11 +363,12 @@ Podríamos querer ordenar los datos mediante algún atributo. Por ejemplo, el a�
 
 ```{r}
 #orden ascendente
-la_pampa <- la_pampa %>% arrange(`Año de creación`)
+la_pampa <- la_pampa %>% arrange(ano_de_creacion)
 head(la_pampa)
 
+
 #orden descendente
-la_pampa <- la_pampa %>% arrange(desc(`Año de creación`))
+la_pampa <- la_pampa %>% arrange(desc(ano_de_creacion))
 la_pampa
 
 ```
@@ -364,8 +378,12 @@ la_pampa
 Podríamos querer crear otra columna, por ejemplo para saber cuál es el % de las mujeres que son responsables en el BP:
 
 ```{r}
-la_pampa <- la_pampa %>% mutate(porcentaje_MR = round((responsable_genero_fem/personas_genero_fem)*100,2))
+la_pampa <- la_pampa %>% 
+  mutate(porcentaje_MR = round((responsable_genero_fem/personas_genero_fem)*100,0))
 
+#con round redondeo los números
+
+#muestro la nueva variable
 select(la_pampa, responsable_genero_fem, personas_genero_fem, porcentaje_MR)
 
 ```
@@ -376,11 +394,11 @@ Para obtener datos agregados por cierta variable, podemos utilizar `group_by()` 
 
 ```{r}
 #cantidad de filas por año
-total_anual <- la_pampa %>% group_by(`Año de creación`) %>% summarise(barrios_creados = n())
+total_anual <- la_pampa %>% group_by(ano_de_creacion) %>% summarise(barrios_creados = n())
 total_anual
 
 #promedio de familias encuestadas por localidad
-flias <- la_pampa %>% group_by(Localidad) %>% summarise(promedio_flias = mean(familias_encuestadas))
+flias <- la_pampa %>% group_by(localidad) %>% summarise(promedio_flias = mean(familias_encuestadas))
 flias
 
 ```
@@ -393,8 +411,8 @@ Podríamos querer renombrar una variable. En ese caso, usaríamos `rename()`:
 
 ```{r}
 #nombre nuevo = nombre a cambiar
-la_pampa <- la_pampa %>% rename(anio_creacion = `Año de creación`,
-                                dpto_partido = `Departamento \\ Partido`)
+la_pampa <- la_pampa %>% rename(anio_creacion = ano_de_creacion,
+                                dpto_partido = departamento_partido)
 colnames(select(la_pampa, 1:6))
 
 ```
