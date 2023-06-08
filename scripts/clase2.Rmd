@@ -375,7 +375,7 @@ la_pampa
 
 ## Mutate()
 
-**Nos quedamos acá en la clase 2!!** Podríamos querer crear otra columna, por ejemplo para saber cuál es el % de las mujeres que son responsables en el BP:
+Podríamos querer crear otra columna, por ejemplo para saber cuál es el % de las mujeres que son responsables en el BP:
 
 ```{r}
 la_pampa <- la_pampa %>% 
