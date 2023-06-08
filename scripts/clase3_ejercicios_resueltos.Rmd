@@ -1,0 +1,499 @@
+---
+title: "Introducción al análisis de datos con R: Clase 3"
+author: "Laboratorio de Datos - El Ateneo"
+date: "08/06/2022"
+output: 
+  rmdformats::robobook:
+    self_contained: true
+    thumbnails: true
+    lightbox: false
+    code_folding: "show"
+---
+
+# Joins
+
+En la clase anterior aprendimos a usar algunas funciones de {dplyr} para trabajar y modificar en una sola tabla.
+
+En principio, cargamos las librerías:
+
+```{r}
+library(tidyverse)
+library(readxl) #Para leer excels
+library(readr) #Para leer CSV
+```
+
+Sin embargo, podría pasar que necesitemos cruzar datos de dos bases diferentes según los valores de alguna variable, algo parecido al *BUSCARV()* en excel. Para estas operaciones, se usan las funciones conocidas como ´\*\_join()´ . Antes de joinear, vamos a levantar la base donde están los datos que queremos agregar
+
+```{r}
+
+# Defino la clase de hoy
+
+clase <- "clase3"
+
+habitantes_bsas <- read.csv(paste0("../data/", clase, "/proyeccion_habitantes_bsas.csv"),encoding = "UTF-8")
+
+#nombres de las columnas
+colnames(habitantes_bsas)
+
+#cantidad de municipios
+length(unique(habitantes_bsas$Municipio))
+
+```
+
+Algo muy importante es que el nombre de las variables de cada df, por las que queremos joinear, debe coincidir. Es decir, ambos df deben tener al menos una columna compartida:
+
+```{r}
+
+#Importo
+clase <- "clase3"
+barrios_populares <-read_csv(paste0("../data/", clase, "/datosbp.csv"))
+
+barrios_populares_2 <- barrios_populares %>%
+  #renombramos la variable del df barrios populares
+  rename(Municipio =`Departamento \\ Partido`)%>%
+  #seleccionamos las columnas que usaremos en el join
+  select(id_renabap, Barrio, Provincia, Municipio, Localidad,`Año de creación`) %>% 
+  #filtro barrios de la prov de Buenos Aires
+  filter(Provincia == "Buenos Aires")
+
+head(barrios_populares_2)
+
+```
+
+### Left_Join()
+
+La función `left_join()` nos junta ambos df pero dándole prioridad a los valores del df de la izquierda, es decir, se queda con todos los valores del primer df y para los valores que no matchean con el segundo df, les asigna valores NA. Así, logramos que no se modifique el número de filas o registros de nuestro primer df (izquierda):
+
+```{r}
+barrios_populares_left_join <- barrios_populares_2 %>%
+  left_join(habitantes_bsas, by="Municipio")
+
+#veo el resultado
+head(barrios_populares_left_join)
+```
+
+### Right_Join()
+
+La función `right_join()` le da prioridad a los valores del df de la derecha:
+
+```{r}
+barrios_populares_right_join <- barrios_populares_2%>%
+  right_join(habitantes_bsas, by="Municipio")
+
+#observo las últimas filas
+tail(barrios_populares_right_join)
+
+```
+
+### Full_Join()
+
+La función `full_join()` nos junta ambos df sin importar si hay valores que no matchean. Para esos valores sin match, se les asigna un NA. De esta forma, es probable que aumenten el número de filas:
+
+```{r}
+barrios_populares_full_join <- barrios_populares_2 %>%
+  full_join(habitantes_bsas, by = "Municipio")
+
+#observo las primeras filas
+head(barrios_populares_full_join)
+```
+
+### Inner_Join()
+
+La función `inner_join()` nos junta ambos df sólo para los valores que matchean, de esta forma es probable que se reduzcan las filas:
+
+```{r}
+barrios_populares_inner_join <- barrios_populares_2 %>%
+  inner_join(habitantes_bsas, by="Municipio")
+
+#observo las primeras filas
+head(barrios_populares_inner_join)
+```
+
+### Anti_Join()
+
+La función `anti_join()` en vez de juntar df, nos elimina aquellos registros para los que encuentra match:
+
+```{r}
+barrios_populares_anti_join <- barrios_populares_2 %>%
+  anti_join(habitantes_bsas, by ="Municipio")
+
+#observo
+head(barrios_populares_anti_join)
+
+```
+
+# Limpieza y transformación de datos
+
+La clase pasada estuvimos introduciendonos en Tidyverse con algunas funciones básicas. Hoy vamos a profundizar en más funciones de limpieza, transformación y exploración de datos.
+
+Vamos a trabajar con datos de divorcios registrados en CABA desde el 2016 a la fecha. [Aquí](https://data.buenosaires.gob.ar/dataset/divorcios) podrán encontrar más información sobre el dataset:
+
+```{r}
+# Levanto data
+df_divorcios <-read_excel(paste0("../data/", clase, "/dataset_divorcios.xlsx"))
+names(df_divorcios)
+
+```
+
+## Glipmse()
+
+Previamente vimos distintas maneras de conocer la estructura del df, dplyr ofrece otra opción con `glimpse()`:
+
+```{r}
+
+glimpse(df_divorcios)
+
+```
+
+## Missing values
+
+Podemos observar que tenemos **11 columnas**, **31.700 filas**, y el tipo de datos que cada una contiene. Vemos que una columna no posee datos, podemos chequear si algún valor es nulo con `anyNA()` o podemos usar `apply()` de R{base} para saber la cantidad de datos nulos:
+
+`apply()` tiene tres argumentos requeridos:
+
+X: matriz, objeto, dataframe MARGIN: 1: filas, 2: columnas, c(1, 2): filas y columnas FUN: función que queremos aplicar
+
+```{r}
+#opción 1: aplicar la función anyNA a cada variable
+#TRUE = al menos algún valor nulo
+anyNA(df_divorcios$...5) 
+anyNA(df_divorcios$GENERO_1)
+
+#opción 2: aplicar la suma de valores NA a todas las columnas del df
+apply(is.na(df_divorcios), 2, sum)
+
+```
+
+Ante la existencia de valores nulos, podemos decidir eliminar las filas que contienen NA con `drop_na()`:
+
+```{r}
+df_sinNA <- df_divorcios %>%
+  #quitemos la fila completamente NA
+  select (-5) %>%
+  #eliminemos NA
+  drop_na()
+
+#chequeo
+apply(is.na(df_sinNA), 2, sum)
+
+```
+
+O bien, podemos elegir darles un valor específico con `replace_na()`:
+
+```{r}
+#chequeo: dia_mat tiene 737 NA
+apply(is.na(df_divorcios), 2, sum)
+
+#reemplazo
+df_reemplazado <- df_divorcios %>% 
+  mutate(DIA_MAT = replace_na(DIA_MAT,"Sin_dato"))
+
+#Chequeo: DIA_MAT ya no registra NA
+apply(is.na(df_reemplazado), 2, sum)
+
+```
+
+### YAPA: fill()
+
+También podría ser de utilidad el `fill()` para imputar datos faltantes según la dirección especificada (down: desde arriba hacia abajo, up: desde abajo hacia arriba). Este parametro indica que la imputación se realizará desde abajo hacia arriba (o viceversa), es decir, los valores faltantes se reemplazarán con el valor de la fila siguiente:
+
+```{r}
+#nos quedamos con las primeras diez filas
+df_ajustado <- df_divorcios %>% head(10)
+head(df_ajustado)
+
+df_ajustado <- df_ajustado %>% 
+                  fill(GENERO_1, 
+                       .direction = "up")
+#Chequeo
+head(df_ajustado)
+```
+
+En este caso, para avanzar en el análisis eliminaremos únicamente la columna que no registra datos:
+
+```{r}
+df_divorcios  <- df_divorcios %>% 
+  select(-...5)
+
+names(df_divorcios)
+```
+
+Volvamos al dataframe, y pongamos atención a la estructura de las variables numéricas mediante un `summary()`:
+
+```{r}
+summary(df_divorcios)
+
+```
+
+Vemos que las variables son de tipo character y no numericas, por lo que lo modificaremos. Para ello, podemos modificar una a una las variables; o utilizar otra función de la familia Applys, `lapply()`, para transformarlas de manera conjunta.
+
+`lapply()` aplica una función a cada columna del df (o vector del objeto), y a diferencia de `apply()` no se aplica a nivel fila:
+
+```{r}
+
+## opción 1: aplicamos la funcion as.numeric a cada variable
+ df_divorcios$DIA_CREACION <- as.numeric(df_divorcios$DIA_CREACION)
+ df_divorcios$ANIO_CREACION <- as.numeric(df_divorcios$ANIO_CREACION)
+
+
+## opción 2: aplicamos la funcion as.numeric al conjunto de variables
+
+#Creamos el vector de las variables que modificaremos: 
+variables_numericas <- c("DIA_CREACION", "ANIO_CREACION", "DIA_MAT", "ANIO_MAT")
+
+#aplicamos la función as.numeric() con lapply()
+df_divorcios[, variables_numericas] <- lapply(X = df_divorcios[, variables_numericas], 
+                                                FUN = as.numeric)
+#Chequeamos
+glimpse(df_divorcios)
+```
+
+## Case_when()
+
+También, pensando en el análisis o la visualización, podríamos necesitar recategorizar las variables. Para ello, podríamos usar `case_when()` junto a `mutate()`.
+
+Por ejemplo, creemos una nueva variable que recodifique los nombres de los meses de divorcios en números:
+
+```{r}
+
+#valores únicos de la variable mes_creacion
+unique(df_divorcios$MES_CREACION)
+
+
+#creo nueva variable: NUM_MES_CREACION
+df_divorcios <- df_divorcios %>% 
+                  mutate(NUM_MES_CREACION = case_when(
+                    MES_CREACION == 'JAN' ~ '01',
+                    MES_CREACION == 'FEB' ~ '02',
+                    MES_CREACION == 'MAR' ~ '03',
+                    MES_CREACION == 'APR' ~ '04',
+                    MES_CREACION == 'MAY' ~ '05',
+                    MES_CREACION == 'JUN' ~ '06',
+                    MES_CREACION == 'JUL' ~ '07',
+                    MES_CREACION == 'AUG' ~ '08',
+                    MES_CREACION == 'SEP' ~ '09',
+                    MES_CREACION == 'OCT' ~ '10',
+                    MES_CREACION == 'NOV' ~ '11',
+                    MES_CREACION == 'DEC' ~ '12'
+                  ))
+
+#Chequeo
+head(df_divorcios %>% select(MES_CREACION, NUM_MES_CREACION))
+
+```
+
+## If_else()
+
+La recategorización de una variable también podríamos hacerla con `if_else()`. Esta función, además, resulta útil cuando queremos modificar un valor puntual de la variable.
+
+Por ejemplo, si debieramos modificar *APR* y *JAN* en *MES_CREACION*:
+
+```{r}
+
+#valores únicos de la variable mes_creacion
+unique(df_divorcios$MES_CREACION)
+
+#Modifico
+df_divorcios <- df_divorcios %>% 
+                        #reemplazo valores sobre la misma variable
+                        mutate(MES_CREACION = 
+                                            ifelse(MES_CREACION == "APR", "ABR",
+                                            ifelse(MES_CREACION == "JAN", "ENE",
+                                                   MES_CREACION)))
+
+
+```
+
+### YAPA: lubridate
+
+A la hora de transformar y explorar datos que contengan fechas u horas, el paquete [paquete Lubridate](https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_lubridate.pdf) resulta por demás útil.
+
+```{r}
+#install.packages("lubridate")
+library(lubridate)
+
+#Transformo fecha de creación del matrimonio a tipo POSIXct
+df_divorcios <- df_divorcios %>% mutate(FECHA_CREACION = dmy_hms(FECHA_CREACION))
+head(df_divorcios)
+
+#extraigo los días , años y meses del casamiento
+df_divorcios <- df_divorcios %>% mutate(dia_crea = day(FECHA_CREACION),
+                                        anio_crea_n = year(FECHA_CREACION),
+                                        mes_crea = month(FECHA_CREACION))
+head(select(df_divorcios, c(1,12:14)))
+     
+#fecha actual
+fecha_actual <- Sys.Date()
+fecha_actual
+anio_actual <- year(Sys.Date())
+anio_actual
+
+#calculo tiempo desde casamiento a la fecha actual
+df_divorcios <- df_divorcios %>% mutate(ant_actualidad = years(anio_actual- anio_crea_n))
+head(df_divorcios)
+
+```
+
+# Reorganización de datos
+
+Por último, podríamos querer modificar la organización de los datos para realizar un join, visualizar o exportarlos a otro formato.
+
+## Spread ()
+
+Si quisieramos pasar los datos de filas a columnas, utilizaríamos `Spread()`.
+
+Por ejemplo, volvamos a la tabla de divorcios anuales:
+
+```{r}
+#Cantidad de divorcios por año
+divorcio_anual <- df_divorcios %>% 
+                      group_by(ANIO_CREACION) %>% 
+                          summarise(total = n())
+
+
+div_anual_col <- spread(divorcio_anual, 
+                        #columna a colapsar
+                        ANIO_CREACION, 
+                        #valores 
+                        total)
+div_anual_col
+
+```
+
+## Gather()
+
+En cambio, si quisieramos pasar de columnas a filas utilizaríamos `gather()`:
+
+```{r}
+div_anual_fil <- gather(div_anual_col, 
+                        #nuevas columnas 
+                        "anios", "total", 
+                        #columnas que deberán colapsarse
+                        1:8)
+
+div_anual_fil
+```
+
+Con los mismos objetivos puede emplearse [`pivot_longer()`](https://tidyr.tidyverse.org/reference/pivot_longer.html) y [`pivot_wider()`](https://tidyr.tidyverse.org/reference/pivot_wider.html). Pueden indagar ambas funciones para ver a cuál se asemeja más cada una.
+
+# Práctica
+
+Para los ejercicios de práctica vamos a trabajar con datos sobre [juego de tronos](https://github.com/cienciadedatos/datos-de-miercoles/tree/master/datos/2019/2019-04-17#fuente-original-y-adaptaci%C3%B3n).
+
+```{r}
+
+tiempo_pantalla <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/tiempo_pantalla.csv")
+
+cambio_lealtades <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/cambio_lealtades.csv")
+
+personajes_libros <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-04-17/personajes_libro.csv")
+
+```
+
+`tiempo_pantalla` tiene los minutos de aparición y cantidad de capítulos en pantalla de los personajes de la series (temporadas 1 a 6)
+
+`cambio_lealtades` tiene los cambios en las lealtades de los personajes a lo largo de las distintas temporadas de la serie (temporadas 1 a 7)
+
+Y, `personajes_libros` posee información sobre los libros en los que aparece cada personaje y su estado vital
+
+1.   crea un data frame que se llame `df_tiempo_libros` que contenga todas las filas de la base `personajes_libros` y las columnas correspondientes a `tiempo_pantalla`. Tenes que usar la columna **`nombre`** para los `.joins`
+
+```{r}
+df_tiempo_libros <- left_join(personajes_libros, tiempo_pantalla, by = "nombre")
+
+```
+
+2.  Crea un nuevo data frame llamado `df_personajes_lealtades` con la información de `personajes_libros` junto con el `cambio_lealtades` para los personajes que están presentes **en ambas bases**.
+
+```{r}
+df_personajes_lealtades <- inner_join(personajes_libros, cambio_lealtades, by = "nombre")
+```
+
+3.  ¿Cómo es la estructura del nuevo `df_personajes_lealtades`?
+
+```{r}
+glimpse(df_personajes_lealtades)
+```
+
+4.  ¿Tiene valores perdidos? ¿En qué columnas?
+
+```{r}
+apply(is.na(df_personajes_lealtades), 2, sum)
+```
+
+5.  Reemplazá los valores NA de la columna `anio_muerte` y `capitulo_muerte` con **"No murio"**. Para eso vas a tener que convertir las variables `anio_muerte` en tipo caracter. Podés usar `lapply()` y `as.character` o realizarlo directamente con `mutate`
+
+```{r}
+class(df_personajes_lealtades$anio_muerte)
+
+#Opcion 1
+df_personajes_lealtades <- df_personajes_lealtades %>% 
+  mutate(anio_muerte = replace_na(as.character(anio_muerte),"no murio"),
+         capitulo_muerte = replace_na(as.character(capitulo_muerte), "no murio"))
+
+
+#opcion 2
+
+#Creamos el vector de las variables que modificaremos: 
+variables_caracter <- c("anio_muerte", "capitulo_muerte")
+
+#aplicamos la función as.character() con lapply()
+df_personajes_lealtades[, variables_caracter] <- lapply(X = df_personajes_lealtades[, variables_caracter], 
+                                                FUN = as.character)
+
+df_personajes_lealtades <- df_personajes_lealtades %>% 
+  mutate(anio_muerte = replace_na(anio_muerte,"no murio"),
+         capitulo_muerte = replace_na(capitulo_muerte, "no murio"))
+```
+
+6.  Reemplazá los valores de la columna `libro_muerte` de `df_personajes_lealtades` con los nombres del libro correspondiente con `if_else`() o `case_when()`. **Recordá que el nombre del libro tiene que estar entre comillas**
+
+| Id  | Libro               |
+|-----|---------------------|
+| 1   | Juego de Tronos     |
+| 2   | Choque de Reyes     |
+| 3   | Tormenta de Espadas |
+| 4   | Festín de Cuervos   |
+| 5   | Danza de Dragones   |
+
+```{r}
+
+#opcion 1 
+
+df_personajes_lealtades_1 <- df_personajes_lealtades %>% 
+  mutate(libro_muerte = case_when(libro_muerte == 1 ~ "Juego de Tronos",
+                                  libro_muerte == 2 ~ "Choque de Reyes",
+                                  libro_muerte == 3 ~ "Tormenta de Espadas",
+                                  libro_muerte ==4 ~ "Festin de Cuervos",  
+                                  libro_muerte == 5 ~ "Danza de Dragones"))
+
+
+# opcion 2
+
+df_personajes_lealtades_2 <- df_personajes_lealtades %>% 
+  mutate(libro_muerte = if_else(libro_muerte == 1, "Juego de Tronos",
+                                if_else(libro_muerte == 2, "Choque de Reyes",
+                                        if_else(libro_muerte == 3, "Tormenta de Espadas",
+                                                if_else(libro_muerte == 4, "Festin de Cuervos",
+                                                        if_else(libro_muerte == 5, "Danza de Dragones", "No murio"))))))
+
+```
+
+
+7. Crea un *dataframe* con la cantidad de episodios por cada personaje. Para ello, selecciona del df `tiempo_pantalla` las columnas `nombre` y `episodio` utilizando `select()`, y convertí las filas en columnas con `spread()`
+
+```{r}
+df_episodios <-tiempo_pantalla %>% 
+  select(nombre, episodios) 
+
+# paso de fila a columna
+df_episodios <- spread(df_episodios, 
+                        #columna a colapsar
+                        nombre, 
+                        #valores 
+                        episodios)
+
+head(df_episodios)
+
+```
+
