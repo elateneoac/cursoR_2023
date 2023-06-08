@@ -258,29 +258,50 @@ library(tidyverse)
 1. Crear tres objetos y asignarles: a uno los nombres, a otro la edad, y al tercero la ocupación de lxs integrantes de tu familia. 
 
 ```{r}
+#creo un objeto con los nombres, edades y ocupación de mis familiares
 
+nombres <- c("Marcelo", "Mabel", "Brenda", "Violeta")
+edades <- c(58,56,23,17)
+ocupacion <- c("empleado/a","empleado/a","psicopedagoga","estudiante")
 ```
 
 2. Para las tres variables creadas en el punto anterior, verificar la clase o el tipo de objeto: 
 
 ```{r}
-
+class(nombres)
+class(edades)
+class(ocupacion)
 ```
 
 3. Chequear si el valor 27 se encuentra comprendido entre las edades de lxs integrantes de tu familia: 
 
 ```{r}
+#Chequeo si 27 está dentro de edades
 
+27 %in% edades
 ```
 
 4. Convertir el objeto nombres en uno de tipo numérico. ¿Qué sucede?
 
 ```{r}
+nombres <- as.numeric(nombres)
 
+#Al no reconocer ningún número dentro del objeto "nombres" todos los valores se convierten en NA 
 ```
 5. Verificar si las ocupaciones incluidas en el tercer objeto son todas iguales:
 
 ```{r}
+#En este punto hay varias formas de hacerlo:
+
+#opcion 1
+ocupacion == "empleado/a"
+
+#opcion 2 chequear uno por uno creando un objeto por ocupacion
+ocupacion_1 = "empleado/a"
+ocupacion_1 == ocupacion
+
+#opcion HARD: (esta última opción todavía no la vimos todavía)
+ocupacion == ocupacion[1]
 
 ```
 
