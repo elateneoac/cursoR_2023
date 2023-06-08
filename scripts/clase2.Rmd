@@ -297,7 +297,7 @@ library(tidyverse)
 
 ```
 
-Vamos a seguir trabajando con el dataframe de barrios populares (2021):
+Vamos a seguir trabajando con el dataframe de barrios populares (2021). Vamos a utilizar la función `clean_names()` del paquete `janitor` para modificar los nombres de las variables. Es muy útil cuando estos poseen mayúsculas y minúsculas, caracteres especiales o espacios.
 
 ```{r}
 #install.package("janitor")
@@ -375,7 +375,7 @@ la_pampa
 
 ## Mutate()
 
-Podríamos querer crear otra columna, por ejemplo para saber cuál es el % de las mujeres que son responsables en el BP:
+**Nos quedamos acá en la clase 2!!** Podríamos querer crear otra columna, por ejemplo para saber cuál es el % de las mujeres que son responsables en el BP:
 
 ```{r}
 la_pampa <- la_pampa %>% 

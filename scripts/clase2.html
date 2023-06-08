@@ -1969,7 +1969,10 @@ R con <code>library()</code>.</p>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <p>Vamos a seguir trabajando con el dataframe de barrios populares
-(2021):</p>
+(2021). Vamos a utilizar la función <code>clean_names()</code> del
+paquete <code>janitor</code> para modificar los nombres de las
+variables. Es muy útil cuando estos poseen mayúsculas y minúsculas,
+caracteres especiales o espacios.</p>
 <div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="co">#install.package(&quot;janitor&quot;)</span></span>
 <span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor) <span class="co">#Janitor nos permite limpiar los nombres de las variables</span></span></code></pre></div>
 <pre><code>## 
@@ -2155,8 +2158,9 @@ ejemplo, el año de creación:</p>
 </div>
 <div id="mutate" class="section level2">
 <h2>Mutate()</h2>
-<p>Podríamos querer crear otra columna, por ejemplo para saber cuál es
-el % de las mujeres que son responsables en el BP:</p>
+<p><strong>Nos quedamos acá en la clase 2!!</strong> Podríamos querer
+crear otra columna, por ejemplo para saber cuál es el % de las mujeres
+que son responsables en el BP:</p>
 <div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>la_pampa <span class="ot">&lt;-</span> la_pampa <span class="sc">%&gt;%</span> </span>
 <span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">porcentaje_MR =</span> <span class="fu">round</span>((responsable_genero_fem<span class="sc">/</span>personas_genero_fem)<span class="sc">*</span><span class="dv">100</span>,<span class="dv">0</span>))</span>
 <span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a></span>
