@@ -1,0 +1,361 @@
+---
+title: "Introducción al análisis de datos con R: Clase 4"
+author: "Laboratorio de Datos - El Ateneo"
+date: "15/06/2023"
+output: 
+  rmdformats::robobook:
+    self_contained: true
+    thumbnails: true
+    lightbox: false
+    code_folding: "show"
+---
+
+# Análisis exploratorio II
+
+La clase pasada estuvimos trabajando con  funciones de transformación y exploración de datos de distintos paquetes. En la clase de hoy profundizaremos en el análisis exploratorio mediante técnicas estadísticas y nos introduciremos en visualización. 
+
+Empecemos por cargar las librerías e importar el DF de divorcios con el que ya estuvimos trabajando:
+
+```{r}
+#Librerías
+library(tidyverse)
+library(readxl)
+
+# Defino la clase  y levanto la data. Seguimos trabajando con los datos de la clase anterior
+clase <- "clase4"
+df_divorcios <-read_excel(paste0("../data/", clase, "/dataset_divorcios.xlsx"))
+
+```
+### Variables categóricas 
+
+## Count ()
+
+Dentro del análisis exploratorio, un recurso clave es el conocimiento de la distribución de frecuencias de las variables. 
+
+Empecemos por ver la *distribución de las variables categóricas*. Lo podemos hacer con `count()` que contabiliza los registros de cada categoría en una nueva columna:
+
+```{r}
+
+divorcios_mensuales <- df_divorcios %>% count(MES_CREACION,
+                                              sort = TRUE) #ordenamos los datos
+divorcios_mensuales
+
+```
+
+## Table()
+
+Podemos obtener la misma distribución con `table()`:
+
+```{r}
+#noten qué pasa al encapsular la asignación en paréntesis: 
+(frecuencias <- table(df_divorcios$MES_CREACION))
+
+```
+## Prop.table()
+
+Además, podemos obtener la **distribución de frecuencias relativas** con `prop.table()`:
+
+```{r}
+prop.table(frecuencias)
+
+#puedo guardarlo en un df
+frec_relativas <- as.data.frame(prop.table(frecuencias))
+view(frec_relativas)
+
+#frecuencias relativas porcentuales
+frec_relativas <- as.data.frame(prop.table(frecuencias)*100)
+view(frec_relativas)
+
+#frecuencias relativas porcentuales con dos decimales
+frec_relativas <- as.data.frame(round(prop.table(frecuencias)*100,2))
+view(frec_relativas)
+
+```
+
+## Cumsum()
+
+Por último, `cumsum()` permite obtener las **frecuencias acumuladas**: 
+
+```{r}
+#Absolutas acumuladas
+cumsum(frecuencias)
+
+#Porcentuales acumuladas
+cumsum(round(prop.table(frecuencias)*100,2))
+```
+### YAPA: Paquete Janitor 
+
+El [paquete Janitor](https://github.com/sfirke/janitor) cuenta con funciones que resultan super útiles a la hora de limpiar y explorar los datos. 
+
+Veamos algunas claves para obtener la distribución de los datos. Una de estas funciones es `tabyl()`. Es un table "mejorado", retorna un DF, calcula porcentajes relativos y si hay NA brinda información acerca de los casos válidos:
+
+```{r}
+#install.packages("janitor")
+library(janitor)
+tabyl(df_divorcios$MES_CREACION) 
+
+# obtenemos absolutos y porcentuales con adorn_pct_formatting() y agregamos totales con adorn_totals()
+df_divorcios %>% tabyl(MES_CREACION) %>% adorn_pct_formatting() %>% adorn_totals()
+
+# cruzamos dos variables categóricas
+df_divorcios %>% 
+  mutate(mismo_genero = 
+           ifelse(GENERO_1 == GENERO_2, 'mismo_genero', 'distinto_genero')) %>% #nueva variables 
+  tabyl(ANIO_CREACION, mismo_genero) #cruce de variables
+
+# cruzamos dos variables categóricas, calculamos porcentajes por fila con adorn_percentages()
+df_divorcios %>% 
+  mutate(mismo_genero = 
+           ifelse(GENERO_1 == GENERO_2, 'mismo_genero', 'distinto_genero')) %>% #nueva variables 
+  tabyl(ANIO_CREACION, mismo_genero) %>% 
+  adorn_percentages('col') %>% # porcentajes por fila, puedo cambiar a columna con 'col'
+  adorn_pct_formatting() #incorporo porcentajes
+
+# podemos customizar aun más la salida! 
+df_divorcios %>% 
+  mutate(mismo_genero = 
+           ifelse(GENERO_1 == GENERO_2, 'mismo_genero', 'distinto_genero')) %>% #nueva variables 
+  tabyl(ANIO_CREACION, mismo_genero) %>% 
+  adorn_percentages('col') %>% # porcentajes por fila, puedo cambiar a columna con 'col'
+  adorn_pct_formatting() %>%#incorporo porcentajes
+  adorn_ns() %>% ##le sumo a cada celda el número de casos absolutos entre paréntesis
+  adorn_title() ##le sumo el título del cruce en la esquina superior izquierda
+
+```
+
+### Variables cuantitativas 
+
+Indaguemos ahora la estructura de las **variables numéricas**:
+
+## Quantile()
+
+Los **cuartiles** pueden calcularse con `quantile()`:
+
+```{r}
+#Cantidad de divorcios por año
+divorcio_anual <- df_divorcios %>% 
+                      group_by(ANIO_CREACION) %>% 
+                          summarise(total = n())
+
+#Cuartiles
+quantile(divorcio_anual$total, prob = c(0.25, 0.5, 0.75, 1), na.rm = TRUE)
+
+```
+
+En el 50% de los años registrados hubo, al menos, más de 4081 divorcios. 
+
+## Mean()
+
+Podemos calcular el **promedio** de divorcios con `mean()`:
+
+```{r}
+
+mean(divorcio_anual$total)
+
+```
+Entre el 2015 y el 2022 se registra un promedio anual de 3963 divorcios. 
+
+## Sd() y Var()
+
+La **desviación estándar** de esta distribución se puede calcular con `sd()` y la **varianza** con `var()`: 
+
+```{r}
+
+(sd(divorcio_anual$total, 
+     na.rm = TRUE))
+
+(var(divorcio_anual$total, 
+    na.rm = T))
+
+```
+
+Además, podemos recurrir a `summary()` que proporciona un resumen de las **medidas de posición** de las variables numéricas: 
+
+
+```{r}
+#RECAP clase 3:
+#Creamos el vector de las variables que modificaremos: 
+variables_numericas <- c("DIA_CREACION", "ANIO_CREACION", "DIA_MAT", "ANIO_MAT")
+#aplicamos la función as.numeric() con lapply()
+df_divorcios[, variables_numericas] <- lapply(X = df_divorcios[, variables_numericas], 
+                                                FUN = as.numeric)
+
+#summary()
+summary(df_divorcios[, variables_numericas])
+
+```
+
+Podemos calcular la cantidad de años de casados de cada caso, creando una nueva variable, y obtener su resumen: 
+
+```{r}
+df_divorcios <- df_divorcios %>% 
+  mutate(anios_casados = ANIO_CREACION - ANIO_MAT)
+
+#resumen
+summary(df_divorcios$anios_casados)
+```
+
+## Boxplot () y Hist()
+
+Se puede ver que -aunque estan próximas- la **mediana** < **media**, lo que evidencia un sesgo hacia la derecha (valores máximos).Esto puede quedar más claro con un **boxplot** mediante la función `boxplot()` o un histograma con `hist()`, ambos de R base: 
+
+```{r}
+#boxplot
+boxplot(df_divorcios$anios_casados, 
+        #título del gráfico
+        main = "Boxplot")
+
+#histograma
+hist(df_divorcios$anios_casados, 
+     #cortes
+     breaks = 10000, 
+     main = "Histograma")
+
+
+```
+
+En ambos gráficos podemos notar la existencia de **valores atípicos** que afectan la distribución de la variable. Con los datos del boxplot, podremos saber cuáles son estos valores (caen por fuera de los umbrales):
+
+```{r}
+
+#cuartiles
+summary(df_divorcios$anios_casados)
+
+#rango intercuartil (q3 - q1): centro del boxplot
+IQR(df_divorcios$anios_casados, na.rm = T)
+
+#valores que caen por fuera de (umbral máximo: 27 + 1.5) y (umbral mínimo: 9 - 1.5)
+outliers <- boxplot(df_divorcios$anios_casados)$out %>% as.data.frame()
+outliers
+
+```
+Hay *130 casos* (0.4%) que sesgan la distribución de los datos. Si bien es importante analizar qué decisión tomar con estas filas, podríamos decidir quitarlos para avanzar en un análisis estadístico. Para ello podríamos utilizar `between()` de Dplyr: 
+
+```{r}
+df_sin_outliers <- df_divorcios %>% 
+                    filter(between(anios_casados, 7.5, 28.5))
+
+#chequeamos distribución
+table(df_sin_outliers$anios_casados)
+
+#probamos realizar nuevamente el gráfico
+boxplot(df_sin_outliers$anios_casados, 
+        main = "Boxplot")
+
+#paprovechemos a jugar un poco customizando estos gráficos
+hist(df_sin_outliers$anios_casados, 
+     breaks = 10, #cortes
+     main = "Histograma", #titulo
+     col = 'red', #color
+     border = 'black', #border color
+     labels = TRUE, #agregamos etiquetas a cada barra
+     ylim = c(0,3000), #definimos los umbrales del eje y
+     xlab  =  "años de casados" #definimos titulo del eje
+     )
+
+```
+
+Podríamos chequear los nuevos valores extremos. Para acceder al valor máximo lo hacemos con `filter()` y `max()`: 
+
+```{r}
+
+df_sin_outliers %>% 
+  filter(anios_casados == max(anios_casados))
+
+#659 casos que registran la mayor cantidad de años de casadxs
+```
+
+Valor mínimo con `min()`: 
+
+```{r}
+(minimos <- df_sin_outliers %>% 
+  filter(anios_casados == min(anios_casados)))
+
+#997 casos con 8 años de casadxs
+
+```
+
+## YAPA: reportes estadísticos
+
+Para obtener resúmenes estadísticos, pueden probar con la función `skim()` del paquete Skimr, con `Desc()` del paquete DesTools, o con `create_report()` del paquete DataExplorer: 
+
+```{r}
+# install.packages("skimr")
+library(skimr)
+
+#se obtiene  un tibble por tipo de variables
+tabla <- skim(df_divorcios)
+tabla
+
+```
+
+```{r}
+# install.packages("DescTools")
+library(DescTools)
+
+#resumen descriptivo
+Desc(df_divorcios)
+
+```
+
+```{r}
+# install.packages("DataExplorer")
+library(DataExplorer)
+
+create_report(df_divorcios)
+
+```
+
+
+
+# Práctica
+
+1. Trabajemos con los datos sobre delitos 2019 en CABA. En principio, poné en práctica algunos de los reportes que presentamos en la clase para conocer la estructura y los datos válidos del DF. 
+
+```{r}
+# Defino la clase de hoy y levanto la data
+clase <- "clase4"
+delitos <-read.csv(paste0("../data/", clase, "/delitos_2019.csv"))
+
+#quitar
+skim(delitos)
+
+```
+
+2. Obtené la distribución de frecuencias para la variable tipo de delito.
+
+```{r}
+table(delitos$tipo_delito) 
+```
+
+3. Si en la consigna anterior utilizaste janitor, en este punto obtené la distribución de frecuencias con funciones de Rbase.De lo contrario, aplica ahora el paquete janitor. 
+
+```{r}
+delitos %>% tabyl(tipo_delito) %>% adorn_pct_formatting() %>% adorn_totals()
+
+```
+
+4. Obtene el promedio de delitos por barrio y ordenalos en sentido descendente. 
+
+```{r}
+delitos %>% group_by(barrio) %>% summarise(total = n()) %>% arrange(-total)
+```
+
+5. Visualiza en un histograma la distribución de robos según hora del suceso. Es probable que debas chequear los tipos de variables antes de visualizar. 
+
+```{r}
+delitos$franja_horaria <- as.numeric(delitos$franja_horaria)
+
+hist(delitos$franja_horaria, 
+     breaks = 10, #cortes
+     main = "Histograma", #titulo
+     col = 'white', #color
+     border = 'black', #border color
+     labels = TRUE, #agregamos etiquetas a cada barra
+     ylim = c(0,20000), #definimos los umbrales del eje y
+     xlab  =  "Hora del delito", #definimos titulo del eje
+     ylab = 'Frecuencia'
+     )
+
+```
+
