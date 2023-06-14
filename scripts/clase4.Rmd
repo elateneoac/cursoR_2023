@@ -317,45 +317,32 @@ create_report(df_divorcios)
 clase <- "clase4"
 delitos <-read.csv(paste0("../data/", clase, "/delitos_2019.csv"))
 
-#quitar
-skim(delitos)
 
 ```
 
 2. Obtené la distribución de frecuencias para la variable tipo de delito.
 
 ```{r}
-table(delitos$tipo_delito) 
+
 ```
 
 3. Si en la consigna anterior utilizaste janitor, en este punto obtené la distribución de frecuencias con funciones de Rbase.De lo contrario, aplica ahora el paquete janitor. 
 
 ```{r}
-delitos %>% tabyl(tipo_delito) %>% adorn_pct_formatting() %>% adorn_totals()
+
 
 ```
 
 4. Obtene el promedio de delitos por barrio y ordenalos en sentido descendente. 
 
 ```{r}
-delitos %>% group_by(barrio) %>% summarise(total = n()) %>% arrange(-total)
+
 ```
 
 5. Visualiza en un histograma la distribución de robos según hora del suceso. Es probable que debas chequear los tipos de variables antes de visualizar. 
 
 ```{r}
-delitos$franja_horaria <- as.numeric(delitos$franja_horaria)
 
-hist(delitos$franja_horaria, 
-     breaks = 10, #cortes
-     main = "Histograma", #titulo
-     col = 'white', #color
-     border = 'black', #border color
-     labels = TRUE, #agregamos etiquetas a cada barra
-     ylim = c(0,20000), #definimos los umbrales del eje y
-     xlab  =  "Hora del delito", #definimos titulo del eje
-     ylab = 'Frecuencia'
-     )
 
 ```
 
