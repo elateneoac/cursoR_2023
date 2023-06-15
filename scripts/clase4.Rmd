@@ -25,6 +25,10 @@ library(readxl)
 clase <- "clase4"
 df_divorcios <-read_excel(paste0("../data/", clase, "/dataset_divorcios.xlsx"))
 
+# Recordemos la estructura del df
+head(df_divorcios, 10)
+
+
 ```
 ### Variables categóricas 
 
