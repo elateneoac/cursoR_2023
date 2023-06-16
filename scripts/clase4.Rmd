@@ -44,6 +44,8 @@ divorcios_mensuales <- df_divorcios %>% count(MES_CREACION,
                                               sort = TRUE) #ordenamos los datos
 divorcios_mensuales
 
+#Chequeo 
+sum(divorcios_mensuales$n)
 ```
 
 ## Table()
@@ -53,6 +55,8 @@ Podemos obtener la misma distribución con `table()`:
 ```{r}
 #noten qué pasa al encapsular la asignación en paréntesis: 
 (frecuencias <- table(df_divorcios$MES_CREACION))
+
+frecuencias <- df_divorcios %>% select(MES_CREACION) %>% table()
 
 ```
 ## Prop.table()
@@ -71,8 +75,16 @@ frec_relativas <- as.data.frame(prop.table(frecuencias)*100)
 view(frec_relativas)
 
 #frecuencias relativas porcentuales con dos decimales
-frec_relativas <- as.data.frame(round(prop.table(frecuencias)*100,2))
+frec_relativas <- as.data.frame(round(prop.table(frecuencias)*100,2)) 
 view(frec_relativas)
+
+# Puedo probar el paquete clipr para copiar las tablas 
+#install.packages("clipr")
+library(clipr)
+
+#agrego la función al final y chequeo que pasa con CTRL + C
+frec_relativas <- as.data.frame(round(prop.table(frecuencias)*100,2)) %>% clipr::write_clip()
+
 
 ```
 
@@ -144,6 +156,11 @@ divorcio_anual <- df_divorcios %>%
 #Cuartiles
 quantile(divorcio_anual$total, prob = c(0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
+# Deciles
+quantile(divorcio_anual$total, prob = seq(0,1, length=11), na.rm = TRUE)
+
+# Percentiles
+quantile(divorcio_anual$total, prob = seq(0,1, length=101), na.rm = TRUE)
 ```
 
 En el 50% de los años registrados hubo, al menos, más de 4081 divorcios. 
@@ -197,6 +214,12 @@ df_divorcios <- df_divorcios %>%
 
 #resumen
 summary(df_divorcios$anios_casados)
+
+# puedo construir mi propia resumen
+resumen <- df_divorcios %>% summarise(promedio = mean(anios_casados, na.rm=T),
+                                      mediana = median(anios_casados, na.rm=T))
+
+resumen
 ```
 
 ## Boxplot () y Hist()
@@ -225,10 +248,10 @@ En ambos gráficos podemos notar la existencia de **valores atípicos** que afec
 #cuartiles
 summary(df_divorcios$anios_casados)
 
-#rango intercuartil (q3 - q1): centro del boxplot
+#rango intercuartil (q3 - q1): centro del boxplot: 27-9
 IQR(df_divorcios$anios_casados, na.rm = T)
 
-#valores que caen por fuera de (umbral máximo: 27 + 1.5) y (umbral mínimo: 9 - 1.5)
+#valores que caen por fuera de (umbral máximo: 27 + 1.5 = 28.5) y (umbral mínimo: 9 - 1.5= 7.5)
 outliers <- boxplot(df_divorcios$anios_casados)$out %>% as.data.frame()
 outliers
 
