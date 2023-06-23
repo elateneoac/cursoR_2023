@@ -134,11 +134,10 @@ plot_delitos_por_tipo
 C. Agegamos la geometría (vamos a hacer un minifiltro para no sobrecargar la memoria): Con `geom_jinter()` incorporamos los puntos.
 
 ```{r}
-plot_delitos_por_tipo<-ggplot(base%>%
-                                filter(barrio=="Palermo"),aes(x=long, y=lat))+
+ggplot(base%>%filter(barrio=="Palermo"),aes(x=long, y=lat))+
   geom_jitter()
 
-plot_delitos_por_tipo
+
 ```
 
 D. Vamos a visualizar una tercer variable con el recurso del color. En este caso, además de x e y, incorporamos el parámetro **color** dentro de `aes()`
@@ -147,7 +146,7 @@ D. Vamos a visualizar una tercer variable con el recurso del color. En este caso
 plot_delitos_por_tipo<-ggplot(base%>%
                                 filter(barrio=="Palermo"),
                               aes(x=long, y=lat, color=tipo_delito))+
-  geom_jitter()
+                              geom_jitter()
 plot_delitos_por_tipo
 ```
 
@@ -167,7 +166,7 @@ F. Podemos customizar aspectos estéticos del gráfico. Por ejemplo, cambiar el 
 plot_delitos_por_tipo<-ggplot(base%>%
                                 filter(barrio=="Palermo"),
                               aes(x=long, y=lat, color=tipo_delito, shape=subtipo_delito))+
-  geom_point(size=0.5)
+  geom_point(size=2)
 plot_delitos_por_tipo
 ```
 
@@ -196,7 +195,8 @@ plot_delitos_por_tipo
 # podríamos usar ifelse en vez de case_when
 plot_delitos_por_tipo<-ggplot(base%>%
                                 filter(barrio=="Palermo") %>% 
-                                mutate (tamano =ifelse(tipo_delito=="Homicidio", 2, .5)),
+                                mutate (tamano =ifelse(tipo_delito=="Homicidio", 2, 
+                                                       ifelse(tipo_delito == "Lesiones",1, .5))),
                               aes(x=long,
                                   y=lat,
                                   color=tipo_delito,
@@ -292,7 +292,8 @@ plot_delitos_por_tipo<-ggplot(base%>%
                                        color="Tipo de delito",
                                        title = "Delitos por tipo",
                                        subtitle = "Palermo",
-                                       caption = "Fuente: datos abiertos GCBA.")
+                                       caption = "Fuente: datos abiertos GCBA.") %>% 
+  theme(legend.position = 'top')
 plot_delitos_por_tipo
 ```
 
@@ -340,8 +341,8 @@ plot_delitos_por_comuna <- ggplot(delitos_por_comuna,
                                                       "Hurto (sin violencia)",
                                                       "Lesiones",
                                                       "Homicidio")))) +
-                              #geom_bar(stat="identity", position = "stack")+
-                              geom_bar(stat="identity", position = "dodge") +
+                              geom_bar(stat="identity", position = "stack")+
+                              #geom_bar(stat="identity", position = "dodge") +
                               # geom_bar(stat="identity", position = "fill")+
                               coord_flip()+ #"volteamos" el grafico
                               #scale_y_continuous(n.breaks = 10)+
@@ -371,9 +372,12 @@ delitos_por_fecha<-base %>%
   group_by(fecha, tipo_delito)%>%
   summarise(cantidad=n())
 
+
+chequeo <- is.na(base$fecha) %>% as.data.frame()
+
 head(delitos_por_fecha)
 
-#graficamos evolución de los delitos por franja horaria, según tipo de delito
+#graficamos evolución de los delitos por fecha, según tipo de delito
 plot_delitos_por_fecha<-ggplot(delitos_por_fecha, 
                                aes(x=fecha, y=cantidad, color=tipo_delito))+
                         geom_line(size=1, alpha=1)
