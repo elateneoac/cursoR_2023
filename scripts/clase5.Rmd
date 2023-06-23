@@ -280,20 +280,21 @@ plot_delitos_por_tipo
 K. Por último, podemos generar gráficos particulares por alguna otra variable de corte con `facet_wrap()`. Por ejemplo, por barrio.
 
 ```{r}
+library(viridis)
+
 plot_delitos_por_tipo<-ggplot(base%>%
                                 filter(barrio%in%c("Palermo", "Paternal", "Flores","Liniers")),
                                        aes(x=long, y=lat,color=tipo_delito))+
                                   geom_point(size=1, alpha=0.7)+
                                   theme_minimal()+
-                                  viridis::scale_color_viridis(option = "inferno", discrete = T)+
+                                  scale_color_viridis(option = "inferno", discrete = T)+
                                   facet_wrap(~barrio)+
                                   labs(x="Longitud",
                                        y="Latitud",
                                        color="Tipo de delito",
                                        title = "Delitos por tipo",
                                        subtitle = "Palermo",
-                                       caption = "Fuente: datos abiertos GCBA.") %>% 
-  theme(legend.position = 'top')
+                                       caption = "Fuente: datos abiertos GCBA.")
 plot_delitos_por_tipo
 ```
 
