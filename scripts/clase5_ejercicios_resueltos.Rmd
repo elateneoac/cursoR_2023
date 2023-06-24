@@ -1,0 +1,175 @@
+---
+title: "Introducción al análisis de datos con R: Clase 5"
+author: "Laboratorio de Datos - El Ateneo"
+date: "22/06/2023"
+output: 
+  rmdformats::robobook:
+    self_contained: true
+    thumbnails: true
+    lightbox: false
+    code_folding: "show"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Gráficos
+
+En la clase de hoy vamos a trabajar en la visualización de datos con
+gráficos estáticos:
+
+## 0. Librerías
+
+Lo primero que vamos a hacer es cargar las librerías.
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(readr)
+```
+
+## 1. Cargar data
+
+Y lo segundo, es cargar el dataset que vamos a usar. Este dataset
+contiene datos de delitos denunciados en CABA durante 2019. Para
+levantar los datos utilizaremos la función `read_delim()` para poder
+definir el delimitador de campos, y también eliminaremos los espacios en
+blanco de los campos, al principio y al final, con **trim_ws**.
+
+Para que sepas, `read_csv()`, es un caso específico de read_delim().
+
+```{r}
+
+clase<-"clase5"
+
+# Si desean pueden traerlo directamente desde la url
+# base <- read.csv("https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-justicia-y-seguridad/delitos/delitos_2019.csv", encoding = "UTF-8")
+
+# Chequeamos que el archivo exista
+file.exists(paste0("../data/", clase, "/delitos_2019.csv"))
+
+# Lo levantamos
+base <-read_delim(file = paste0("../data/", clase, "/delitos_2019.csv"),
+                  delim = ",",  trim_ws = TRUE)
+head(base,10)
+
+```
+
+
+## Práctica
+
+1.  Visualizar los 10 barrios con mayor cantidad de homicidos:
+
+```{r}
+delitos_por_barrio <- base %>%
+            filter(tipo_delito == 'Homicidio') %>% 
+            group_by(barrio) %>%
+            summarise(cantidad = n()) %>% arrange(-cantidad) %>% head(10)
+
+ggplot(delitos_por_barrio, 
+                           aes(x=reorder(barrio,cantidad),
+                               y=cantidad)) +
+                              geom_bar(stat="identity", position = "dodge", fill = 'lightblue') +
+                              coord_flip()+ 
+                              theme_minimal()+ 
+                              theme(axis.text.y = element_text(size = 10),
+                                    title = element_text(size = 12))+ 
+                              labs(x="", y="Cantidad",
+                                   title = "10 barrios con mayor cantidad de homicidios en 2019.",
+                                   caption = "Fuente:datos abiertos GCBA") 
+
+```
+
+2.  Visualizar la evolución de delitos a lo largo del año de la Comuna 1 vs la Comuna 3:
+
+```{r}
+delitos_por_fecha <-base %>% 
+                    filter(comuna %in% c(1,3)) %>% 
+                    mutate(fecha=dmy(fecha),
+                           comuna= as.factor(comuna)) %>%
+                    group_by(fecha, comuna)%>%
+                    summarise(cantidad=n())
+
+ggplot(delitos_por_fecha, aes(x=fecha, y=cantidad, color=comuna))+
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y %b")+
+  geom_smooth() +
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+                              theme(axis.text.y = element_text(size = 10),
+                                    title = element_text(size = 12))+ 
+                              labs(x="", y="Cantidad de delitos",
+                                   title = "Evolución de delitos en 2019.",
+                                   subtitle = "Comunas 1 y 3.",
+                                   caption = "Fuente:datos abiertos GCBA",
+                                   fill = 'Comuna') 
+```
+
+3.  Visualizar los delitos que ocurren por horario y día según cada tipo de delito:
+
+```{r}
+# para domingo 
+delitos_por_fecha<-base %>%
+  filter(!franja_horaria == "S/D")%>%
+  mutate(tipo_delito = as.factor(tipo_delito),
+         fecha=dmy(fecha),
+         dia = format(fecha,"%A"),
+         horario=as.numeric(franja_horaria),
+         fecha_com = paste(dia, '-',horario)) %>% 
+  filter(dia == 'domingo') %>% 
+  group_by(fecha_com, tipo_delito)%>%
+  summarise(cantidad=n()) %>% ungroup()
+
+ggplot(delitos_por_fecha , aes(x=fecha_com, y=cantidad, color=tipo_delito, group = tipo_delito))+
+  geom_line() +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+                              theme(axis.text.y = element_text(size = 10),
+                                    title = element_text(size = 12),
+                                    legend.position = 'top') +
+  labs(x="Dia- hora", y="Cantidad",
+                                   title = "Cantidad de delitos por hora en el día domingo.",
+                                   caption = "Fuente:datos abiertos GCBA, 2019", color = 'Tipo de delito') 
+
+
+
+
+
+```
+
+4.  Visualizar cuál es el día de la semana en el que ocurren menos delitos (pista: usar lubridate para tranformar la variable fecha y que nos muestre el día de la semana):
+
+```{r}
+delitos_por_fecha<-base %>%
+  mutate(tipo_delito = as.factor(tipo_delito),
+         fecha=dmy(fecha),
+         dia = format(fecha,"%A")) %>% 
+  group_by(dia)%>%
+  summarise(cantidad=n()) 
+
+ggplot(delitos_por_fecha, 
+                           aes(x=reorder(dia,cantidad),
+                               y=cantidad)) +
+                              geom_bar(stat="identity", position = "dodge", fill = 'purple') +
+                              coord_flip()+ 
+                              theme_minimal()+ 
+                              theme(axis.text.y = element_text(size = 10),
+                                    title = element_text(size = 12))+ 
+                              labs(x="", y="Cantidad",
+                                   title = "Cantidad de delitos por día de la semana.",
+                                   caption = "Fuente:datos abiertos GCBA") 
+
+```
+
+5- Visualizar la ubicación de los robos en el barrio Agronomía:
+
+```{r}
+ggplot(base%>% filter(barrio=="Agronomía"),
+                              aes(x=long, y=lat, color=tipo_delito))+geom_point() + theme_update() + labs(x="Longitud", y="Latitud",
+                                   title = "Delitos en Agronomía.", color = 'Tipo de delito',
+                                   caption = "Fuente:datos abiertos GCBA") 
+
+```
